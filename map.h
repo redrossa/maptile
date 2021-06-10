@@ -7,7 +7,7 @@
 
 #define MAPTILE_TILE_DIM 256
 
-typedef struct map
+typedef struct
 {
     int zoom;
     double lat_minbound;
@@ -22,6 +22,19 @@ typedef struct map
     int yshape;
     int tile_count;
 } map_t;
+
+typedef struct
+{
+    int zoom;
+    int x;
+    int y;
+} tile_t;
+
+void tile_iterator(map_t *, tile_t *);
+
+int tile_next(map_t *, tile_t *);
+
+int tile_url(tile_t *, char *);
 
 map_t * map_new(int, double, double, double, double);
 
