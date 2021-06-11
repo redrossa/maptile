@@ -23,25 +23,10 @@ typedef struct
     int tile_count;
 } map_t;
 
-typedef struct
-{
-    int zoom;
-    int x;
-    int y;
-} tile_t;
-
-void tile_iterator(map_t *, tile_t *);
-
-int tile_next(map_t *, tile_t *);
-
-int tile_url(tile_t *, char *);
-
 map_t * map_new(int, double, double, double, double);
 
 void map_del(map_t *);
 
 int map_pprint(map_t *);
-
-char ** map_get_urls(map_t *map);
 
 #endif //MAPTILE_MAP_H
