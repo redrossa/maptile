@@ -14,11 +14,11 @@ typedef struct
     int y;
 } tile_t;
 
-void tile_iterator(map_t *, tile_t *);
+void tile_iterator(tile_t *, map_t *);
 
-int tile_next(map_t *, tile_t *);
+int tile_next(tile_t *, map_t *);
 
-int tile_fromindex(map_t *, tile_t *, int);
+int tile_fromindex(tile_t *, map_t *, int);
 
 int tile_url(tile_t *, char *);
 

@@ -7,31 +7,31 @@
 #include <stdio.h>
 #include <string.h>
 
-void tile_iterator(map_t * map, tile_t * current)
+void tile_iterator(tile_t * tile, map_t * map)
 {
-    current->zoom = map->zoom;
-    current->x = map->xmin;
-    current->y = map->ymin;
+    tile->zoom = map->zoom;
+    tile->x = map->xmin;
+    tile->y = map->ymin;
 }
 
-int tile_next(map_t * map, tile_t * current)
+int tile_next(tile_t * tile, map_t * map)
 {
-    if (current->zoom != map->zoom
-        || current->x > map->xmax
-        || current->y > map->ymax
-        || current->x == map->xmax && current->y == map->ymax)
+    if (tile->zoom != map->zoom
+        || tile->x > map->xmax
+        || tile->y > map->ymax
+        || tile->x == map->xmax && tile->y == map->ymax)
         return 0;
-    if (current->y < map->ymax)
-        current->y++;
-    else if (current->x < map->xmax)
+    if (tile->y < map->ymax)
+        tile->y++;
+    else if (tile->x < map->xmax)
     {
-        current->x++;
-        current->y = map->ymin;
+        tile->x++;
+        tile->y = map->ymin;
     }
     return 1;
 }
 
-int tile_fromindex(map_t * map, tile_t * tile, int i)
+int tile_fromindex(tile_t * tile, map_t * map, int i)
 {
     if (i >= map->tile_count)
         return 0;
@@ -40,9 +40,6 @@ int tile_fromindex(map_t * map, tile_t * tile, int i)
     tile->y = map->ymin + i % map->yshape;
     return 1;
 }
-
-#define MAPTILE_ENDPOINT "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"
-#define MAPTILE_ENDPOINT_LENGTH 56
 
 size_t len_num(unsigned int n) {
     int len = 1;
@@ -54,42 +51,19 @@ size_t len_num(unsigned int n) {
     return len;
 }
 
+#define MAPTILE_ENDPOINT "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"
+
 int tile_url(tile_t * tile, char * dest)
 {
-    int len = 0;
-    char tmp[6];
+    int length = 0;
 
-    // copy the endpoint
-    strcpy(dest, MAPTILE_ENDPOINT);
-    len += MAPTILE_ENDPOINT_LENGTH;
+    length += sprintf(dest, MAPTILE_ENDPOINT);
+    length += sprintf(dest + length, "%d", tile->zoom);
+    length += sprintf(dest + length, "/");
+    length += sprintf(dest + length, "%d", tile->x);
+    length += sprintf(dest + length, "/");
+    length += sprintf(dest + length, "%d", tile->y);
+    length += sprintf(dest + length, ".png");
 
-
-    // concat the zoom value
-    sprintf(tmp, "%d", tile->zoom);
-    strcat(dest, tmp);
-    len += len_num(tile->zoom);
-
-    // concat the url separator
-    strcat(dest, "/");
-    len++;
-
-    // concat the x value
-    sprintf(tmp, "%d", tile->x);
-    strcat(dest, tmp);
-    len += len_num(tile->x);
-
-    // concat the url separator
-    strcat(dest, "/");
-    len++;
-
-    // concat the y value
-    sprintf(tmp, "%d", tile->y);
-    strcat(dest, tmp);
-    len += len_num(tile->y);
-
-    // concat the file extension
-    strcat(dest, ".png");
-    len += 4;
-
-    return len;
+    return length;
 }
