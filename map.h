@@ -23,9 +23,7 @@ typedef struct
     int tile_count;
 } map_t;
 
-map_t * map_new(int, double, double, double, double);
-
-void map_del(map_t *);
+void map_init(map_t *, int, double, double, double, double);
 
 int map_pprint(map_t *);
 
