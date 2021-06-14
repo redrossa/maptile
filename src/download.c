@@ -2,20 +2,26 @@
 // Created by @redrossa on 6/10/21.
 //
 
-#include "download.h"
+#include "../include/download.h"
 
-#include "tile.h"
+#include "../include/tile.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <curl/curl.h>
 
+#ifdef _WIN32
+#   define PATH_SEP "\\"
+#else
+#   define PATH_SEP "/"
+#endif
+
 int tile_filename(char * dest, char * dirname, tile_t * tile)
 {
     int length = 0;
     length += sprintf(dest, "%s", dirname);
-    length += sprintf(dest + length, "/");
+    length += sprintf(dest + length, PATH_SEP);
     length += sprintf(dest + length, "%d", tile->zoom);
     length += sprintf(dest + length, "-");
     length += sprintf(dest + length, "%d", tile->x);
@@ -44,16 +50,21 @@ int download(char * dirname, map_t * map)
     int successes = 0;
     char url_buf[100];
     tile_t tile;
+    char * name_buf = malloc(strlen(dirname) + 25);
+    if (!name_buf)
+    {
+        curl_easy_cleanup(curl);
+        return successes;
+    }
 
 #pragma omp parallel for
     for (int i = 0; i < map->tile_count; i++)
     {
         tile_fromindex(&tile, map, i);
 
-        char name[strlen(dirname) + 25];
-        tile_filename(name, dirname, &tile);
+        tile_filename(name_buf, dirname, &tile);
 
-        FILE * fp = fopen(name, "wb");
+        FILE * fp = fopen(name_buf, "wb");
         if (!fp)
         {
             curl_easy_cleanup(curl);
@@ -70,6 +81,7 @@ int download(char * dirname, map_t * map)
         fclose(fp);
     }
 
+    free(name_buf);
     curl_easy_cleanup(curl);
 
     return successes;

@@ -2,7 +2,7 @@
 // Created by Muhammad Adriano Raksi on 6/10/21.
 //
 
-#include "tile.h"
+#include "../include/tile.h"
 
 #include <stdio.h>
 #include <string.h>

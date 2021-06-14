@@ -2,7 +2,7 @@
 // Created by @redrossa on 6/7/21.
 //
 
-#include "map.h"
+#include "../include/map.h"
 
 #include <stdio.h>
 #include <stdlib.h>
