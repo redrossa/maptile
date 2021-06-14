@@ -67,3 +67,16 @@ int tile_url(tile_t * tile, char * dest)
 
     return length;
 }
+
+int tile_tostring(tile_t * tile, char * dest)
+{
+    int length = 0;
+
+    length += sprintf(dest, "%d", tile->zoom);
+    length += sprintf(dest + length, "-");
+    length += sprintf(dest + length, "%d", tile->x);
+    length += sprintf(dest + length, "-");
+    length += sprintf(dest + length, "%d", tile->y);
+
+    return length;
+}

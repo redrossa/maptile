@@ -22,4 +22,6 @@ int tile_fromindex(tile_t *, map_t *, int);
 
 int tile_url(tile_t *, char *);
 
+int tile_tostring(tile_t *, char *);
+
 #endif //MAPTILE_TILE_H
