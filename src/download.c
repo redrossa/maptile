@@ -4,84 +4,75 @@
 
 #include "../include/download.h"
 
-#include "../include/tile.h"
-
 #include <stdlib.h>
 #include <string.h>
 
 #include <curl/curl.h>
 
-#ifdef _WIN32
-#   define PATH_SEP "\\"
-#else
-#   define PATH_SEP "/"
-#endif
-
-int tile_filename(char * dest, char * dirname, tile_t * tile)
+struct memory
 {
-    int length = 0;
-    length += sprintf(dest, "%s", dirname);
-    length += sprintf(dest + length, PATH_SEP);
-    length += sprintf(dest + length, "%d", tile->zoom);
-    length += sprintf(dest + length, "-");
-    length += sprintf(dest + length, "%d", tile->x);
-    length += sprintf(dest + length, "-");
-    length += sprintf(dest + length, "%d", tile->y);
-    length += sprintf(dest + length, ".png");
-    return length;
-}
+    unsigned char * response;
+    size_t size;
+};
 
-size_t write_callback(char * data, size_t size, size_t nmemb, void * userp)
+static size_t write_cb(void * data, size_t size, size_t nmemb, void * dest)
 {
     size_t realsize = size * nmemb;
+    struct memory *mem = (struct memory *) dest;
+
+    unsigned char * ptr = realloc(mem->response, mem->size + realsize + 1);
+    if(ptr == NULL)
+        return 0;  /* out of memory! */
+
+    mem->response = ptr;
+    memcpy(&(mem->response[mem->size]), data, realsize);
+    mem->size += realsize;
+    mem->response[mem->size] = 0;
+
     return realsize;
 }
 
-int download(char * dirname, map_t * map)
+int download(map_t * map, size_t (*flush)(unsigned char *, size_t, tile_t *, int i, va_list), ...)
 {
     CURL * curl;
     CURLcode code;
 
     curl = curl_easy_init();
-
     if (!curl)
         return -1;
 
     int successes = 0;
     char url_buf[100];
     tile_t tile;
-    char * name_buf = malloc(strlen(dirname) + 25);
-    if (!name_buf)
-    {
-        curl_easy_cleanup(curl);
-        return successes;
-    }
+    struct memory resp_buf = {0};
+
+    va_list args;
+    va_start(args, flush);
 
 #pragma omp parallel for
-    for (int i = 0; i < map->tile_count; i++)
-    {
+    for (int i = 0; i < map->tile_count; i++) {
         tile_fromindex(&tile, map, i);
+        tile_url(&tile, url_buf);
 
-        tile_filename(name_buf, dirname, &tile);
+        curl_easy_setopt(curl, CURLOPT_URL, url_buf);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp_buf);
 
-        FILE * fp = fopen(name_buf, "wb");
-        if (!fp)
-        {
-            curl_easy_cleanup(curl);
-            return successes;
+        code = curl_easy_perform(curl);
+        if (code == CURLE_OK) {
+            size_t res = flush ? (*flush)(resp_buf.response, resp_buf.size, &tile, i, args) : resp_buf.size;
+            if (res == resp_buf.size)
+                successes++;
         }
 
-        tile_url(&tile, url_buf);
-        curl_easy_setopt(curl, CURLOPT_URL, url_buf);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-        code = curl_easy_perform(curl);
-        if (code == CURLE_OK)
-            successes++;
-
-        fclose(fp);
+        if (resp_buf.size > 0)
+        {
+            free(resp_buf.response);
+            resp_buf = (struct memory) {0};
+        }
     }
 
-    free(name_buf);
+    va_end(args);
     curl_easy_cleanup(curl);
 
     return successes;

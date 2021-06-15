@@ -5,9 +5,12 @@
 #ifndef MAPTILE_DOWNLOAD_H
 #define MAPTILE_DOWNLOAD_H
 
-#include "map.h"
+#include <stdio.h>
 
-int download(char *, map_t *);
+#include "map.h"
+#include "tile.h"
+
+int download(map_t * map, size_t (*)(unsigned char *, size_t, tile_t *, int, va_list), ...);
 
 int download_multi(char *, map_t *);
 
