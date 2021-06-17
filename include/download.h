@@ -10,8 +10,17 @@
 #include "map.h"
 #include "tile.h"
 
-int download(map_t * map, size_t (*)(unsigned char *, size_t, tile_t *, int, va_list), ...);
+typedef struct
+{
+    tile_t * info;
+    size_t size;
+    unsigned char * data;
+} tile_data_t;
 
-int download_multi(char *, map_t *);
+#define DOWNLOAD_MAX_PARALLEL 128
+
+int download(map_t *, size_t (*)(tile_data_t *, va_list), ...);
+
+int download_multi(map_t *, size_t (*)(tile_data_t *, va_list), ...);
 
 #endif //MAPTILE_DOWNLOAD_H
