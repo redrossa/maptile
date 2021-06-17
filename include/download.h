@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-#include "map.h"
 #include "tile.h"
 
 typedef struct
@@ -16,6 +15,8 @@ typedef struct
     size_t size;
     unsigned char * data;
 } tile_data_t;
+
+char * flush_file_name(char * dirname, tile_data_t * td, char * ext);
 
 #define DOWNLOAD_MAX_PARALLEL 128
 

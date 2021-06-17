@@ -9,6 +9,17 @@
 
 #include <curl/curl.h>
 
+char * flush_file_name(char * dirname, tile_data_t * td, char * ext)
+{
+    const char * const format = "%s/%02d-%05d-%05d.%s";
+    const char * const measure = "/ZZ-XXXXX-YYYYY.";
+    char * fname = malloc(strlen(dirname) + strlen(measure) + strlen(ext) + 1);
+    if (!fname)
+        return NULL;
+    sprintf(fname, format, dirname, td->info->zoom, td->info->x, td->info->y, ext);
+    return fname;
+}
+
 static size_t write_cb(void * data, size_t size, size_t nmemb, void * dest)
 {
     size_t realsize = size * nmemb;
