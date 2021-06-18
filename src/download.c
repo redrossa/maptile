@@ -9,7 +9,7 @@
 
 #include <curl/curl.h>
 
-char * flush_file_name(char * dirname, tile_data_t * td, char * ext)
+char * flush_tile_fname(char * dirname, tile_data_t * td, char * ext)
 {
     const char * const format = "%s/%02d-%05d-%05d.%s";
     const char * const measure = "/ZZ-XXXXX-YYYYY.";

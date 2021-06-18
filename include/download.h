@@ -16,7 +16,7 @@ typedef struct
     unsigned char * data;
 } tile_data_t;
 
-char * flush_file_name(char * dirname, tile_data_t * td, char * ext);
+char * flush_tile_fname(char * dirname, tile_data_t * td, char * ext);
 
 #define DOWNLOAD_MAX_PARALLEL 128
 
