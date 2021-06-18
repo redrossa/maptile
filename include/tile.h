@@ -20,6 +20,8 @@ int tile_next(tile_t *, map_t *);
 
 int tile_fromindex(tile_t *, map_t *, int);
 
+int tile_toindex(tile_t *, map_t *);
+
 int tile_url(tile_t *, char *);
 
 int tile_tostring(tile_t *, char *);

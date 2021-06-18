@@ -3,12 +3,19 @@ project(maptile C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(maptile main.c map.h map.c)
+file(GLOB SRC src/*.c)
+file(GLOB INCLUDE include/*.h)
 
-find_package(CURL REQUIRED)
-include_directories(${CURL_INCLUDE_DIR})
-target_link_libraries(maptile ${CURL_LIBRARIES})
+add_executable(maptile main.c ${SRC} ${INCLUDE})
 
-find_package(PNG REQUIRED)
-include_directories(${PNG_INCLUDE_DIR})
-target_link_libraries(maptile ${PNG_LIBRARIES})
+add_executable(linear_download examples/linear_download.c ${SRC} ${INCLUDE})
+add_executable(multi_download examples/multi_download.c ${SRC} ${INCLUDE})
+add_executable(merge examples/merge.c ${SRC} ${INCLUDE})
+add_executable(spng_test examples/spng_test.c ${SRC} ${INCLUDE})
+
+find_package(CURL CONFIG REQUIRED)
+target_link_libraries(maptile PRIVATE CURL::libcurl)
+target_link_libraries(linear_download PRIVATE CURL::libcurl)
+target_link_libraries(multi_download PRIVATE CURL::libcurl)
+target_link_libraries(merge PRIVATE CURL::libcurl)
+target_link_libraries(spng_test PRIVATE CURL::libcurl)

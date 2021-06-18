@@ -10,23 +10,23 @@
 void tile_iterator(tile_t * tile, map_t * map)
 {
     tile->zoom = map->zoom;
-    tile->x = map->xmin;
-    tile->y = map->ymin;
+    tile->x = map->xminb;
+    tile->y = map->yminb;
 }
 
 int tile_next(tile_t * tile, map_t * map)
 {
     if (tile->zoom != map->zoom
-        || tile->x > map->xmax
-        || tile->y > map->ymax
-        || tile->x == map->xmax && tile->y == map->ymax)
+        || tile->x > map->xmaxb
+        || tile->y > map->ymaxb
+        || tile->x == map->xmaxb && tile->y == map->ymaxb)
         return 0;
-    if (tile->y < map->ymax)
+    if (tile->y < map->ymaxb)
         tile->y++;
-    else if (tile->x < map->xmax)
+    else if (tile->x < map->xmaxb)
     {
         tile->x++;
-        tile->y = map->ymin;
+        tile->y = map->yminb;
     }
     return 1;
 }
@@ -36,12 +36,22 @@ int tile_fromindex(tile_t * tile, map_t * map, int i)
     if (i >= map->tile_count)
         return 0;
     tile->zoom = map->zoom;
-    tile->x = map->xmin + i / map->yshape;
-    tile->y = map->ymin + i % map->yshape;
+    tile->x = map->xminb + i / map->yshape;
+    tile->y = map->yminb + i % map->yshape;
     return 1;
 }
 
-size_t len_num(unsigned int n) {
+int tile_toindex(tile_t * tile, map_t * map)
+{
+    if (tile->zoom != map->zoom
+        || tile->x > map->xmaxb
+        || tile->y > map->ymaxb)
+        return -1;
+    return (tile->x - map->xminb) * map->yshape;
+}
+
+size_t len_num(unsigned int n)
+{
     int len = 1;
     while (n > 9)
     {
