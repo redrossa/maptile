@@ -66,7 +66,7 @@ int map_pprint(map_t * map) {
                    map->lat_minb, map->lon_minb,
                    map->lat_maxb, map->lon_maxb,
                    map->xminb, map->xmaxb,
-                   map->ymaxb, map->yminb,
+                   map->yminb, map->ymaxb,
                    map->xshape, map->yshape,
                    map->tile_count
     );
