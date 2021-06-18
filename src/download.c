@@ -9,14 +9,57 @@
 
 #include <curl/curl.h>
 
+#define FNAME_Z_LENGTH 2
+#define FNAME_X_LENGTH 5
+#define FNAME_Y_LENGTH 5
+
+#define FNAME_TILE_LENGTH(dirname, ext) ( \
+    strlen(dirname)     + 1 +             \
+    FNAME_Z_LENGTH      + 1 +             \
+    FNAME_X_LENGTH      + 1 +             \
+    FNAME_Y_LENGTH      + 1 +             \
+    strlen(ext)         + 1               \
+)
+#define FNAME_MAP_LENGTH(dirname, ext) ( \
+    strlen(dirname)     + 1 +            \
+    FNAME_Z_LENGTH      + 1 +            \
+    FNAME_X_LENGTH      + 1 +            \
+    FNAME_Y_LENGTH      + 1 +            \
+    FNAME_X_LENGTH      + 1 +            \
+    FNAME_Y_LENGTH      + 1 +            \
+    strlen(ext)         + 1              \
+)
+
+#define FNAME_TILE_FORMAT "%s/%0*d-%0*d-%*d.%s"
+#define FNAME_MAP_FORMAT "%s/%0*d-%0*d-%*d-%0*d-%*d.%s"
+
 char * flush_tile_fname(char * dirname, tile_data_t * td, char * ext)
 {
-    const char * const format = "%s/%02d-%05d-%05d.%s";
-    const char * const measure = "/ZZ-XXXXX-YYYYY.";
-    char * fname = malloc(strlen(dirname) + strlen(measure) + strlen(ext) + 1);
+    char * fname = malloc(FNAME_TILE_LENGTH(dirname, ext));
     if (!fname)
         return NULL;
-    sprintf(fname, format, dirname, td->info->zoom, td->info->x, td->info->y, ext);
+    sprintf(fname, FNAME_TILE_FORMAT,
+            dirname,
+            FNAME_Z_LENGTH, td->info->zoom,
+            FNAME_X_LENGTH, td->info->x,
+            FNAME_Y_LENGTH, td->info->y,
+            ext);
+    return fname;
+}
+
+char * flush_map_fname(char * dirname, map_t * map, char * ext)
+{
+    char * fname = malloc(FNAME_MAP_LENGTH(dirname, ext));
+    if (!fname)
+        return NULL;
+    sprintf(fname, FNAME_MAP_FORMAT,
+            dirname,
+            FNAME_Z_LENGTH, map->zoom,
+            FNAME_X_LENGTH, map->xminb,
+            FNAME_Y_LENGTH, map->yminb,
+            FNAME_X_LENGTH, map->xmaxb,
+            FNAME_Y_LENGTH, map->ymaxb,
+            ext);
     return fname;
 }
 

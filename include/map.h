@@ -14,10 +14,10 @@ typedef struct
     double lon_minbound;
     double lat_maxbound;
     double lon_maxbound;
-    int xmin;
-    int xmax;
-    int ymin;
-    int ymax;
+    int xminb;
+    int xmaxb;
+    int yminb;
+    int ymaxb;
     int xshape;
     int yshape;
     int tile_count;

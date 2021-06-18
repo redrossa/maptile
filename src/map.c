@@ -39,12 +39,12 @@ void map_init(map_t * map, int zoom, double lat1, double lon1, double lat2, doub
     map->lon_minbound = fmin(lon1, lon2);
     map->lat_maxbound = fmin(lat1, lat2);
     map->lon_maxbound = fmax(lon1, lon2);
-    map->xmin = x_mercator(zoom, map->lon_minbound);
-    map->ymin = y_mercator(zoom, map->lat_minbound);
-    map->xmax = x_mercator(zoom, map->lon_maxbound);
-    map->ymax = y_mercator(zoom, map->lat_maxbound);
-    map->xshape = map->xmax + 1 - map->xmin;
-    map->yshape = map->ymax + 1 - map->ymin;
+    map->xminb = x_mercator(zoom, map->lon_minbound);
+    map->yminb = y_mercator(zoom, map->lat_minbound);
+    map->xmaxb = x_mercator(zoom, map->lon_maxbound);
+    map->ymaxb = y_mercator(zoom, map->lat_maxbound);
+    map->xshape = map->xmaxb + 1 - map->xminb;
+    map->yshape = map->ymaxb + 1 - map->yminb;
     map->tile_count = map->xshape * map->yshape;
 }
 
@@ -61,8 +61,8 @@ int map_pprint(map_t * map) {
                    map->zoom,
                    map->lat_minbound, map->lon_minbound,
                    map->lat_maxbound, map->lon_maxbound,
-                   map->xmin, map->xmax,
-                   map->ymin, map->ymax,
+                   map->xminb, map->xmaxb,
+                   map->yminb, map->ymaxb,
                    map->xshape, map->yshape,
                    map->tile_count
     );
