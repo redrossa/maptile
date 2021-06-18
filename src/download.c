@@ -60,7 +60,7 @@ static int setup_easy(CURL * eh, tile_t * tile)
     return 1;
 }
 
-int download(map_t * map, size_t (*flush)(tile_data_t *, va_list), ...)
+int download(map_t * map, size_t (*flush)(tile_data_t *, map_t *, va_list), ...)
 {
     CURLcode code;
     CURL * eh = curl_easy_init();
@@ -85,7 +85,7 @@ int download(map_t * map, size_t (*flush)(tile_data_t *, va_list), ...)
 
         tile_data_t * td;
         curl_easy_getinfo(eh, CURLINFO_PRIVATE, &td);
-        if (code == CURLE_OK && (!flush || (flush && (*flush)(td, args) == td->size)))
+        if (code == CURLE_OK && (!flush || (flush && (*flush)(td, map, args) == td->size)))
             successes++;
         else
             i--; /* Retry this tile */
@@ -129,7 +129,7 @@ static CURL * multi_add_transfer(CURLM * cm, map_t * map, int i)
     return eh;
 }
 
-int download_multi(map_t * map, size_t (*flush)(tile_data_t *, va_list), ...)
+int download_multi(map_t * map, size_t (*flush)(tile_data_t *, map_t *,  va_list), ...)
 {
     CURLM * cm;
     CURLMsg * msg;
@@ -191,7 +191,7 @@ int download_multi(map_t * map, size_t (*flush)(tile_data_t *, va_list), ...)
                 tile_data_t * td;
                 curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &td);
 
-                if (code == CURLE_OK && (!flush || (flush && (*flush)(td, args) == td->size)))
+                if (code == CURLE_OK && (!flush || (flush && (*flush)(td, map, args) == td->size)))
                 {
                     successes++;
 

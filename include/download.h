@@ -20,8 +20,8 @@ char * flush_tile_fname(char * dirname, tile_data_t * td, char * ext);
 
 #define DOWNLOAD_MAX_PARALLEL 128
 
-int download(map_t *, size_t (*)(tile_data_t *, va_list), ...);
+int download(map_t *, size_t (*)(tile_data_t *, map_t *, va_list), ...);
 
-int download_multi(map_t *, size_t (*)(tile_data_t *, va_list), ...);
+int download_multi(map_t *, size_t (*)(tile_data_t *, map_t *, va_list), ...);
 
 #endif //MAPTILE_DOWNLOAD_H
