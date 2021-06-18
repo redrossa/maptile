@@ -35,14 +35,18 @@ static int y_mercator(int zoom, double lat)
 void map_init(map_t * map, int zoom, double lat1, double lon1, double lat2, double lon2)
 {
     map->zoom = zoom;
-    map->lat_minbound = fmax(lat1, lat2);
-    map->lon_minbound = fmin(lon1, lon2);
-    map->lat_maxbound = fmin(lat1, lat2);
-    map->lon_maxbound = fmax(lon1, lon2);
-    map->xminb = x_mercator(zoom, map->lon_minbound);
-    map->yminb = y_mercator(zoom, map->lat_minbound);
-    map->xmaxb = x_mercator(zoom, map->lon_maxbound);
-    map->ymaxb = y_mercator(zoom, map->lat_maxbound);
+
+    /* Note that lat/lon values start at vertical center of whole map */
+    map->lat_minb = fmax(lat1, lat2);
+    map->lon_minb = fmin(lon1, lon2);
+    map->lat_maxb = fmin(lat1, lat2);
+    map->lon_maxb = fmax(lon1, lon2);
+
+    /* Note that x/y values start at 0 from top-leftmost of whole map */
+    map->xminb = x_mercator(zoom, map->lon_minb);
+    map->yminb = y_mercator(zoom, map->lat_minb);
+    map->xmaxb = x_mercator(zoom, map->lon_maxb);
+    map->ymaxb = y_mercator(zoom, map->lat_maxb);
     map->xshape = map->xmaxb + 1 - map->xminb;
     map->yshape = map->ymaxb + 1 - map->yminb;
     map->tile_count = map->xshape * map->yshape;
@@ -59,10 +63,10 @@ int map_pprint(map_t * map) {
                    "\ttile_count: %d\n"
                    "}\n",
                    map->zoom,
-                   map->lat_minbound, map->lon_minbound,
-                   map->lat_maxbound, map->lon_maxbound,
+                   map->lat_minb, map->lon_minb,
+                   map->lat_maxb, map->lon_maxb,
                    map->xminb, map->xmaxb,
-                   map->yminb, map->ymaxb,
+                   map->ymaxb, map->yminb,
                    map->xshape, map->yshape,
                    map->tile_count
     );

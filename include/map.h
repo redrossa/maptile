@@ -9,17 +9,36 @@
 
 typedef struct
 {
+    /* Zoom of this map */
     int zoom;
-    double lat_minbound;
-    double lon_minbound;
-    double lat_maxbound;
-    double lon_maxbound;
+
+    /* Minimum bound is the top-leftmost bound */
+    double lat_minb;
+    double lon_minb;
+
+    /* Maximum bound is the low-rightmost bound */
+    double lat_maxb;
+    double lon_maxb;
+
+    /* X of the minimum bounding tile */
     int xminb;
-    int xmaxb;
+
+    /* Y of the minimum bounding tile */
     int yminb;
+
+    /* X of the maximum bounding tile */
+    int xmaxb;
+
+    /* Y of the maximum bounding tile */
     int ymaxb;
+
+    /* Number of tiles horizontally */
     int xshape;
+
+    /* Number of tiles vertically */
     int yshape;
+
+    /* Total number of tiles */
     int tile_count;
 } map_t;
 
