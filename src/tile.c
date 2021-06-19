@@ -36,8 +36,8 @@ int tile_fromindex(tile_t * tile, map_t * map, int i)
     if (i >= map->tile_count)
         return 0;
     tile->zoom = map->zoom;
-    tile->x = map->xminb + i / map->yshape;
-    tile->y = map->yminb + i % map->yshape;
+    tile->x = map->xminb + i % map->xshape;
+    tile->y = map->yminb + i / map->xshape;
     return 1;
 }
 
@@ -47,7 +47,7 @@ int tile_toindex(tile_t * tile, map_t * map)
         || tile->x > map->xmaxb
         || tile->y > map->ymaxb)
         return -1;
-    return (tile->x - map->xminb) * map->yshape;
+    return (tile->y - map->yminb) * map->xshape;
 }
 
 size_t len_num(unsigned int n)
