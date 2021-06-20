@@ -10,23 +10,23 @@
 #include <curl/curl.h>
 
 #define FNAME_Z_LENGTH 2
-#define FNAME_X_LENGTH 5
 #define FNAME_Y_LENGTH 5
+#define FNAME_X_LENGTH 5
 
 #define FNAME_TILE_LENGTH(dirname, ext) ( \
     strlen(dirname)     + 1 +             \
     FNAME_Z_LENGTH      + 1 +             \
-    FNAME_X_LENGTH      + 1 +             \
     FNAME_Y_LENGTH      + 1 +             \
+    FNAME_X_LENGTH      + 1 +             \
     strlen(ext)         + 1               \
 )
 #define FNAME_MAP_LENGTH(dirname, ext) ( \
     strlen(dirname)     + 1 +            \
     FNAME_Z_LENGTH      + 1 +            \
-    FNAME_X_LENGTH      + 1 +            \
     FNAME_Y_LENGTH      + 1 +            \
     FNAME_X_LENGTH      + 1 +            \
     FNAME_Y_LENGTH      + 1 +            \
+    FNAME_X_LENGTH      + 1 +            \
     strlen(ext)         + 1              \
 )
 
