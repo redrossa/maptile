@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <curl/curl.h>
 
@@ -103,7 +104,7 @@ static int setup_easy(CURL * eh, tile_t * tile)
     return 1;
 }
 
-int download(map_t * map, size_t (*flush)(tile_data_t *, map_t *, va_list), ...)
+int download(map_t * map, flushfn_t flush, ...)
 {
     CURLcode code;
     CURL * eh = curl_easy_init();
@@ -172,7 +173,7 @@ static CURL * multi_add_transfer(CURLM * cm, map_t * map, int i)
     return eh;
 }
 
-int download_multi(map_t * map, size_t (*flush)(tile_data_t *, map_t *,  va_list), ...)
+int download_multi(map_t * map, flushfn_t flushfn, ...)
 {
     CURLM * cm;
     CURLMsg * msg;
@@ -218,7 +219,7 @@ int download_multi(map_t * map, size_t (*flush)(tile_data_t *, map_t *,  va_list
 
     int successes = 0;
     va_list args;
-    va_start(args, flush);
+    va_start(args, flushfn);
 
     do {
         curl_multi_perform(cm, &still_alive);
@@ -234,7 +235,7 @@ int download_multi(map_t * map, size_t (*flush)(tile_data_t *, map_t *,  va_list
                 tile_data_t * td;
                 curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &td);
 
-                if (code == CURLE_OK && (!flush || (flush && (*flush)(td, map, args) == td->size)))
+                if (code == CURLE_OK && (!flushfn || (flushfn && (*flushfn)(td, map, args) == td->size)))
                 {
                     successes++;
 

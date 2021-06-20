@@ -22,8 +22,10 @@ char * flush_map_fname(char *, map_t *, char *);
 
 #define DOWNLOAD_MAX_PARALLEL 128
 
-int download(map_t *, size_t (*)(tile_data_t *, map_t *, va_list), ...);
+typedef size_t (*flushfn_t)(tile_data_t *, map_t *, va_list);
 
-int download_multi(map_t *, size_t (*)(tile_data_t *, map_t *, va_list), ...);
+int download(map_t *, flushfn_t, ...);
+
+int download_multi(map_t *, flushfn_t, ...);
 
 #endif //MAPTILE_DOWNLOAD_H
