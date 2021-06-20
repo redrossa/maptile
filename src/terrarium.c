@@ -99,57 +99,55 @@ size_t terrarium_map_fflush(tile_data_t * td, map_t * map, va_list args)
     static int itc = 0;
     static terrarium_t ** holder = NULL;
 
+    /* Only at the first iteration */
     if (!itc++)
-    {
         holder = calloc(map->tile_count, sizeof(terrarium_t *));
-        if (!holder)
-            return 0;
-    }
 
-    if (holder)
+    /* Error at any iteration would make holder == NULL */
+    if (!holder)
+        return 0;
+
+    int current_tile_index = tile_toindex(td->info, map);
+    terrarium_t * t = terrarium_init_decode(td->data, td->size);
+    if (!t)
     {
-        int current_tile_index = tile_toindex(td->info, map);
-        terrarium_t * t = terrarium_init_decode(td->data, td->size);
-        if (!t)
+        free_merger_holder(holder, map->tile_count);
+        holder = NULL;
+        return 0;
+    }
+    holder[current_tile_index] = t;
+
+    /* Only at the last iteration */
+    if (itc == map->tile_count)
+    {
+        itc = 0;
+        terrarium_t * merged = terrarium_init(map->xshape * TERRARIUM_TILE_DIM, map->yshape * TERRARIUM_TILE_DIM);
+        if (!merged)
         {
             free_merger_holder(holder, map->tile_count);
             holder = NULL;
             return 0;
         }
-        holder[current_tile_index] = t;
-
-        /* Only at the last iteration */
-        if (itc == map->tile_count)
+        if (!terrarium_merge(merged, holder, map->xshape, map->yshape))
         {
-            itc = 0;
-            terrarium_t * merged = terrarium_init(map->xshape * TERRARIUM_TILE_DIM, map->yshape * TERRARIUM_TILE_DIM);
-            if (!merged)
-            {
-                free_merger_holder(holder, map->tile_count);
-                holder = NULL;
-                return 0;
-            }
-            if (!terrarium_merge(merged, holder, map->xshape, map->yshape))
-            {
-                free_merger_holder(holder, map->tile_count);
-                terrarium_free(merged);
-                holder = NULL;
-                return 0;
-            }
-
-            char * dirname = va_arg(args, char *);
-            char * fname = flush_map_fname(dirname, map, "terrarium.png");
-            if (!fname)
-            {
-                free_merger_holder(holder, map->tile_count);
-                terrarium_free(merged);
-                holder = NULL;
-                return 0;
-            }
-
-            lodepng_encode24_file(fname, merged->data, merged->pixwidth, merged->pixheight);
+            free_merger_holder(holder, map->tile_count);
+            terrarium_free(merged);
             holder = NULL;
+            return 0;
         }
+
+        char * dirname = va_arg(args, char *);
+        char * fname = flush_map_fname(dirname, map, "terrarium.png");
+        if (!fname)
+        {
+            free_merger_holder(holder, map->tile_count);
+            terrarium_free(merged);
+            holder = NULL;
+            return 0;
+        }
+
+        lodepng_encode24_file(fname, merged->data, merged->pixwidth, merged->pixheight);
+        holder = NULL;
     }
 
     return td->size;
