@@ -47,7 +47,7 @@ int tile_toindex(tile_t * tile, map_t * map)
         || tile->x > map->xmaxb
         || tile->y > map->ymaxb)
         return -1;
-    return (tile->y - map->yminb) * map->xshape;
+    return (tile->y - map->yminb) * map->xshape + (tile->x - map->xminb);
 }
 
 size_t len_num(unsigned int n)
