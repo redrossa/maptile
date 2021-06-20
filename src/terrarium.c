@@ -97,7 +97,7 @@ static void free_merger_holder(terrarium_t ** holder, int n)
 size_t terrarium_map_fflush(tile_data_t * td, map_t * map, va_list args)
 {
     static int itc = 0;
-    static terrarium_t ** holder;
+    static terrarium_t ** holder = NULL;
 
     if (!itc++)
     {
@@ -113,10 +113,12 @@ size_t terrarium_map_fflush(tile_data_t * td, map_t * map, va_list args)
         if (!t)
         {
             free_merger_holder(holder, map->tile_count);
+            holder = NULL;
             return 0;
         }
         holder[current_tile_index] = t;
 
+        /* Only at the last iteration */
         if (itc == map->tile_count)
         {
             itc = 0;
@@ -124,12 +126,14 @@ size_t terrarium_map_fflush(tile_data_t * td, map_t * map, va_list args)
             if (!merged)
             {
                 free_merger_holder(holder, map->tile_count);
+                holder = NULL;
                 return 0;
             }
             if (!terrarium_merge(merged, holder, map->xshape, map->yshape))
             {
                 free_merger_holder(holder, map->tile_count);
                 terrarium_free(merged);
+                holder = NULL;
                 return 0;
             }
 
@@ -139,10 +143,12 @@ size_t terrarium_map_fflush(tile_data_t * td, map_t * map, va_list args)
             {
                 free_merger_holder(holder, map->tile_count);
                 terrarium_free(merged);
+                holder = NULL;
                 return 0;
             }
 
             lodepng_encode24_file(fname, merged->data, merged->pixwidth, merged->pixheight);
+            holder = NULL;
         }
     }
 
