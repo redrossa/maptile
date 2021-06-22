@@ -1,5 +1,5 @@
 //
-// Created by @redrossa on 2021-06-16.
+// Created by @redrossa on 2021-06-20.
 //
 
 #ifndef MAPTILE_TERRARIUM_H
@@ -7,37 +7,20 @@
 
 #include "download.h"
 
-typedef struct
+#include <stdarg.h>
+#include <curl/curl.h>
+
+namespace terrarium
 {
-    unsigned char * data;
-    size_t pixwidth;
-    size_t pixheight;
-} terrarium_t;
+    using namespace maptile;
 
-#define TERRARIUM_TILE_DIM 256
-#define TERRARIUM_PIXEL_SIZE 3
-#define TERRARIUM_PIXEL(terra, x, y) ((x + y * terra->pixwidth) * TERRARIUM_PIXEL_SIZE)
-#define TERRARIUM_PIXEL_TOP(terra, x, y) (TERRARIUM_PIXEL(terra, x, y) - terra->pixwidth * TERRARIUM_PIXEL_SIZE)
-#define TERRARIUM_PIXEL_BOT(terra, x, y) (TERRARIUM_PIXEL(terra, x, y) + terra->pixwidth * TERRARIUM_PIXEL_SIZE)
+    char *tile_url_init(map *m, index_t x, index_t y);
 
-terrarium_t * terrarium_init(size_t, size_t);
+    byte_t *png_decode(size_t *nmemb, size_t *pixw_dst, size_t *pixh_dst, byte_t *img, size_t size);
 
-void terrarium_free(terrarium_t *);
+    int direct_tile_fflush(index_t itc, map *m, tile_transfer_t *tile_transf, va_list args);
 
-size_t terrarium_tile_fflush(tile_data_t *, map_t *, va_list);
-
-size_t terrarium_map_fflush(tile_data_t *, map_t *, va_list);
-
-int terrarium_jigsaw(terrarium_t *, unsigned int, unsigned int, terrarium_t *);
-
-int terrarium_merge(terrarium_t *, terrarium_t **, size_t, size_t);
-
-terrarium_t * terrarium_init_decode(unsigned char *png_bytes, size_t size);
-
-int terrarium_get_pixel(terrarium_t *, int, int, unsigned char *);
-
-int terrarium_get_top_pixel(terrarium_t *, int, int, unsigned char *);
-
-int terrarium_get_bottom_pixel(terrarium_t *, int, int, unsigned char *);
+    int map_fflush(index_t itc, map *m, tile_transfer_t *tile_transf, va_list args);
+}
 
 #endif //MAPTILE_TERRARIUM_H

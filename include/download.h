@@ -1,31 +1,30 @@
 //
-// Created by @redrossa on 6/10/21.
+// Created by @redrossa on 2021-06-20.
 //
+
+#include "map.h"
+
+#include <curl/curl.h>
 
 #ifndef MAPTILE_DOWNLOAD_H
 #define MAPTILE_DOWNLOAD_H
 
-#include <stdio.h>
-
-#include "tile.h"
-
-typedef struct
+namespace maptile
 {
-    tile_t * info;
-    size_t size;
-    unsigned char * data;
-} tile_data_t;
+    typedef struct
+    {
+        index_t z;
+        index_t x;
+        index_t y;
+        byte_t *data;
+        size_t size;
+    } tile_transfer_t;
 
-char * flush_tile_fname(char *, tile_data_t *, char *);
+    typedef char *(*tile_url_init_fnp)(map *m, index_t x, index_t y);
 
-char * flush_map_fname(char *, map_t *, char *);
+    typedef int (*tile_handle_fnp)(index_t itc, map *m, tile_transfer_t *tile_transf, va_list args);
 
-#define DOWNLOAD_MAX_PARALLEL 128
-
-typedef size_t (*flushfn_t)(tile_data_t *, map_t *, va_list);
-
-int download(map_t *, flushfn_t, ...);
-
-int download_multi(map_t *, flushfn_t, ...);
+    int download_tiles(map *m, tile_url_init_fnp url_initfnp, tile_handle_fnp handlefnp, ...);
+}
 
 #endif //MAPTILE_DOWNLOAD_H

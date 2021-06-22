@@ -1,29 +1,52 @@
 //
-// Created by Muhammad Adriano Raksi on 6/10/21.
+// Created by @redrossa on 2021-06-20.
 //
 
 #ifndef MAPTILE_TILE_H
 #define MAPTILE_TILE_H
 
-#include "map.h"
+#include <cstddef>
+#include "maptile.h"
 
-typedef struct
+namespace maptile
 {
-    int zoom;
-    int x;
-    int y;
-} tile_t;
+    class tile
+    {
+    private:
+        index_t zoom;
+        index_t x;
+        index_t y;
+        size_t pixw;
+        size_t pixh;
+        size_t pix_size;
+        byte_t *pix_bytes;
+    public:
+        tile(index_t zoom, index_t x, index_t y, size_t pixw, size_t pixh, size_t pix_size);
 
-void tile_iterator(tile_t *, map_t *);
+        tile(tile *t);
 
-int tile_next(tile_t *, map_t *);
+        ~tile();
 
-int tile_fromindex(tile_t *, map_t *, int);
+        index_t get_zoom() const;
 
-int tile_toindex(tile_t *, map_t *);
+        index_t get_x() const;
 
-int tile_url(tile_t *, char *);
+        index_t get_y() const;
 
-int tile_tostring(tile_t *, char *);
+        size_t get_pixw() const;
+
+        size_t get_pixh() const;
+
+        size_t get_pix_size() const;
+
+        size_t expected_size() const;
+
+        void get_pix(byte_t *dst, index_t xpix, index_t ypix) const;
+
+        void set_pix_bytes(byte_t *src, size_t size);
+
+        byte_t * get_pix_bytes();
+    };
+}
 
 #endif //MAPTILE_TILE_H
