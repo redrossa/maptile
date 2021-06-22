@@ -11,12 +11,11 @@
 
 using namespace maptile;
 
-static size_t write_cb(void *data, size_t size, size_t nmemb, void *userp)
-{
+static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp) {
     size_t realsize = size * nmemb;
-    auto *mem = (tile_transfer_t *) userp;
+    auto* mem = (tile_transfer_t*) userp;
 
-    auto *ptr = static_cast<byte_t *>(realloc(mem->data, mem->size + realsize + 1));
+    auto* ptr = static_cast<byte_t*>(realloc(mem->data, mem->size + realsize + 1));
     if (!ptr)
         return 0;  /* out of memory! */
 
@@ -28,21 +27,19 @@ static size_t write_cb(void *data, size_t size, size_t nmemb, void *userp)
     return realsize;
 }
 
-static int setup_transfer(CURL *eh, map *m, tile_url_init_fnp url_initfnp, index_t transfers)
-{
+static int setup_transfer(CURL* eh, map* m, tile_url_initfn_t* url_initfnp, index_t transfers) {
     if (!eh)
         return 0;
 
     index_t x, y;
     m->tile_coord_from_index(&x, &y, transfers);
 
-    char *url = (*url_initfnp)(m, x, y);
+    char* url = (*url_initfnp)(m, x, y);
     if (!url)
         return 0;
 
-    auto *priv = static_cast<tile_transfer_t *>(malloc(sizeof(tile_transfer_t)));
-    if (!priv)
-    {
+    auto* priv = static_cast<tile_transfer_t*>(malloc(sizeof(tile_transfer_t)));
+    if (!priv) {
         free(url);
         return 0;
     }
@@ -65,10 +62,9 @@ static int setup_transfer(CURL *eh, map *m, tile_url_init_fnp url_initfnp, index
     return 1;
 }
 
-int maptile::download_tiles(map *m, tile_url_init_fnp url_initfnp, tile_handle_fnp handlefnp, ...)
-{
-    CURLM *cm;
-    CURLMsg *msg;
+int maptile::download_tiles(map* m, tile_url_initfn_t* url_initfnp, tile_handlefn_t* handlefnp, ...) {
+    CURLM* cm;
+    CURLMsg* msg;
     int msgs_left = 0;
     int still_alive = 0;
     index_t transfers;
@@ -84,16 +80,14 @@ int maptile::download_tiles(map *m, tile_url_init_fnp url_initfnp, tile_handle_f
     curl_multi_setopt(cm, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 
     /* Initialize easy handler container */
-    std::vector<CURL *> ehs;
+    std::vector<CURL*> ehs;
     ehs.reserve(nparallel);
 
     /* Will only use nparallel number of easy transfers since curl_easy_init() is costly */
-    for (transfers = 0; transfers < nparallel; transfers++)
-    {
-        CURL *eh = curl_easy_init();
+    for (transfers = 0; transfers < nparallel; transfers++) {
+        CURL* eh = curl_easy_init();
         int ok = setup_transfer(eh, m, url_initfnp, transfers);
-        if (!eh || !ok)
-        {
+        if (!eh || !ok) {
             for (auto& eh : ehs)
                 curl_easy_cleanup(eh);
             curl_multi_cleanup(cm);
@@ -106,38 +100,33 @@ int maptile::download_tiles(map *m, tile_url_init_fnp url_initfnp, tile_handle_f
     int successes = 0;
     index_t itc = 0;
     va_list args;
-            va_start(args, handlefnp);
+    va_start(args, handlefnp);
 
-    do
-    {
+    do {
         curl_multi_perform(cm, &still_alive);
 
-        while ((msg = curl_multi_info_read(cm, &msgs_left)))
-        {
+        while ((msg = curl_multi_info_read(cm, &msgs_left))) {
             if (msg->msg != CURLMSG_DONE)
                 continue;
 
             CURLcode code = msg->data.result;
-            CURL *eh = msg->easy_handle;
+            CURL* eh = msg->easy_handle;
             curl_multi_remove_handle(cm, eh);
-            tile_transfer_t *priv;
+            tile_transfer_t* priv;
             curl_easy_getinfo(eh, CURLINFO_PRIVATE, &priv);
             itc++;
 
-            if (code == CURLE_OK)
-            {
+            if (code == CURLE_OK) {
                 if ((*handlefnp)(itc, m, priv, args))
                     successes++;
 
                 /* Reuse easy handler for the next tile */
-                if (transfers < m->get_tile_count())
-                {
+                if (transfers < m->get_tile_count()) {
                     index_t x, y;
                     m->tile_coord_from_index(&x, &y, transfers++);
 
-                    char *url = (*url_initfnp)(m, x, y);
-                    if (!url)
-                    {
+                    char* url = (*url_initfnp)(m, x, y);
+                    if (!url) {
                         free(priv->data);
                         free(priv);
                         curl_easy_cleanup(eh);
@@ -173,7 +162,7 @@ int maptile::download_tiles(map *m, tile_url_init_fnp url_initfnp, tile_handle_f
 
     } while (still_alive);
 
-            va_end(args);
+    va_end(args);
     curl_multi_cleanup(cm);
 
     return successes;

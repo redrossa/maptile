@@ -8,10 +8,8 @@
 #include "maptile.h"
 #include "tile.h"
 
-namespace maptile
-{
-    class map
-    {
+namespace maptile {
+    class map {
     private:
         index_t zoom;
         index_t xmin;
@@ -21,7 +19,7 @@ namespace maptile
         size_t xshape;
         size_t yshape;
         size_t tile_count;
-        tile **tiles;
+        tile** tiles;
         index_t t_idx;
     public:
         map(index_t zoom, double lat1, double lon1, double lat2, double lon2);
@@ -44,19 +42,19 @@ namespace maptile
 
         size_t get_tile_count() const;
 
-        void tile_coord_from_index(index_t *xdst, index_t *ydst, index_t i) const;
+        void tile_coord_from_index(index_t* xdst, index_t* ydst, index_t i) const;
 
         index_t tile_coord_to_index(index_t x, index_t y) const;
 
-        void set_tile(tile *t);
+        void set_tile(tile* t);
 
-        tile *get_tile(index_t i);
+        tile* get_tile(index_t i);
 
-        tile *get_tile(index_t x, index_t y);
+        tile* get_tile(index_t x, index_t y);
 
         size_t expected_size() const;
 
-        void merge_tile_data_to_buf(byte_t *dst, size_t size);
+        void merge_tile_data_to_buf(byte_t* dst, size_t size);
     };
 }
 

@@ -4,6 +4,7 @@
 
 #include "../include/map.h"
 
+#include <string>
 #include <cmath>
 #include <stdexcept>
 
@@ -13,8 +14,7 @@
 
 using namespace maptile;
 
-static int x_mercator(int zoom, double lon)
-{
+static int x_mercator(int zoom, double lon) {
     size_t tiles = 2 << (zoom - 1);
     double diameter = 2 * M_PI;
     double rad = lon * M_PI / 180.0;
@@ -22,8 +22,7 @@ static int x_mercator(int zoom, double lon)
     return x_coord;
 }
 
-static int y_mercator(int zoom, double lat)
-{
+static int y_mercator(int zoom, double lat) {
     size_t tiles = 2 << (zoom - 1);
     double diameter = 2 * M_PI;
     double rad = lat * M_PI / 180.0;
@@ -32,8 +31,7 @@ static int y_mercator(int zoom, double lat)
     return y_coord;
 }
 
-map::map(index_t zoom, double lat1, double lon1, double lat2, double lon2)
-{
+map::map(index_t zoom, double lat1, double lon1, double lat2, double lon2) {
     this->zoom = zoom;
 
     double lat_min = std::fmax(lat1, lat2);
@@ -55,8 +53,7 @@ map::map(index_t zoom, double lat1, double lon1, double lat2, double lon2)
     t_idx = tile_count;
 }
 
-map::~map()
-{
+map::~map() {
     if (!tiles)
         return;
     for (int i = 0; i < tile_count; ++i)
@@ -64,63 +61,52 @@ map::~map()
     free(tiles);
 }
 
-index_t map::get_zoom() const
-{
+index_t map::get_zoom() const {
     return zoom;
 }
 
-index_t map::get_xmin() const
-{
+index_t map::get_xmin() const {
     return xmin;
 }
 
-index_t map::get_xmax() const
-{
+index_t map::get_xmax() const {
     return xmax;
 }
 
-index_t map::get_ymin() const
-{
+index_t map::get_ymin() const {
     return ymin;
 }
 
-index_t map::get_ymax() const
-{
+index_t map::get_ymax() const {
     return ymax;
 }
 
-size_t map::get_xshape() const
-{
+size_t map::get_xshape() const {
     return xshape;
 }
 
-size_t map::get_yshape() const
-{
+size_t map::get_yshape() const {
     return yshape;
 }
 
-size_t map::get_tile_count() const
-{
+size_t map::get_tile_count() const {
     return tile_count;
 }
 
-void map::tile_coord_from_index(index_t* xdst, index_t* ydst, index_t i) const
-{
+void map::tile_coord_from_index(index_t* xdst, index_t* ydst, index_t i) const {
     if (i >= tile_count)
         throw std::out_of_range("index out of bounds");
     *xdst = xmin + i % xshape;
     *ydst = ymin + i / xshape;
 }
 
-index_t map::tile_coord_to_index(index_t x, index_t y) const
-{
+index_t map::tile_coord_to_index(index_t x, index_t y) const {
     if (x > xmax || y > ymax)
         throw std::invalid_argument("tile out of bounds");
     return (y - ymin) * xshape + (x - xmin);
 }
 
-void map::set_tile(tile* t)
-{
+void map::set_tile(tile* t) {
     if (t->get_zoom() != zoom || t->get_x() > xmax || t->get_y() > ymax)
         throw std::invalid_argument("tile out of bounds");
     if (t_idx < tile_count && t->expected_size() != tiles[t_idx]->expected_size())
@@ -134,40 +120,34 @@ void map::set_tile(tile* t)
     t_idx = i;
 }
 
-tile* map::get_tile(index_t i)
-{
+tile* map::get_tile(index_t i) {
     if (!tiles)
-        throw std::exception("tiles not yet initialized");
+        throw std::exception();
     return tiles[i];
 }
 
-tile* map::get_tile(index_t x, index_t y)
-{
+tile* map::get_tile(index_t x, index_t y) {
     return get_tile(tile_coord_to_index(x, y));
 }
 
-size_t map::expected_size() const
-{
+size_t map::expected_size() const {
     return t_idx ? tiles[t_idx]->expected_size() * tile_count : 0;
 }
 
-void map::merge_tile_data_to_buf(byte_t* dst, size_t size)
-{
+void map::merge_tile_data_to_buf(byte_t* dst, size_t size) {
     if (!tiles)
-        throw std::exception("tiles not yet initialized");
+        throw std::exception();
     if (size < expected_size())
-        throw std::exception("destination buffer too small");
+        throw std::exception();
     size_t dst_pixw = xshape * tiles[t_idx]->get_pixw();
-    for (int i = 0; i < tile_count; i++)
-    {
+    for (int i = 0; i < tile_count; i++) {
         tile* t = tiles[i];
 
         index_t dst_byte_x = i % xshape * t->get_pixw();
         index_t dst_byte_y = i / xshape * t->get_pixh();
         index_t dst_start = (dst_byte_x + dst_byte_y * dst_pixw) * t->get_pix_size();
 
-        for (int r = 0; r < t->get_pixh(); r++)
-        {
+        for (int r = 0; r < t->get_pixh(); r++) {
             index_t dst_row_start = dst_start + r * dst_pixw * t->get_pix_size();
             index_t src_row_start = r * t->get_pixw() * t->get_pix_size();
             memcpy(&dst[dst_row_start], &t->get_pix_bytes()[src_row_start], t->get_pixw() * t->get_pix_size());

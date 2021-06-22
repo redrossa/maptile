@@ -8,10 +8,8 @@
 #include <cstddef>
 #include "maptile.h"
 
-namespace maptile
-{
-    class tile
-    {
+namespace maptile {
+    class tile {
     private:
         index_t zoom;
         index_t x;
@@ -19,11 +17,11 @@ namespace maptile
         size_t pixw;
         size_t pixh;
         size_t pix_size;
-        byte_t *pix_bytes;
+        byte_t* pix_bytes;
     public:
         tile(index_t zoom, index_t x, index_t y, size_t pixw, size_t pixh, size_t pix_size);
 
-        tile(tile *t);
+        tile(tile* t);
 
         ~tile();
 
@@ -41,11 +39,11 @@ namespace maptile
 
         size_t expected_size() const;
 
-        void get_pix(byte_t *dst, index_t xpix, index_t ypix) const;
+        void get_pix(byte_t* dst, index_t xpix, index_t ypix) const;
 
-        void set_pix_bytes(byte_t *src, size_t size);
+        void set_pix_bytes(byte_t* src, size_t size);
 
-        byte_t * get_pix_bytes();
+        byte_t* get_pix_bytes();
     };
 }
 
