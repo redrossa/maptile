@@ -8,12 +8,31 @@
 #include <cstddef>
 #include "maptile.h"
 
-namespace maptile {
-    class tile {
-    private:
+namespace maptile
+{
+    struct degen_tile
+    {
         index_t zoom;
         index_t x;
         index_t y;
+
+        degen_tile() : zoom(0), x(0), y(0) {};
+        degen_tile(index_t _z, index_t _x, index_t _y) : zoom(_z), x(_x), y(_y) {};
+
+        bool operator==(degen_tile other)
+        {
+            return zoom == other.zoom && x == other.zoom && y == other.y;
+        };
+
+        bool operator!=(degen_tile other)
+        {
+            return zoom != other.zoom || x != other.zoom || y != other.y;
+        };
+    };
+
+    class tile : degen_tile
+    {
+    private:
         size_t pixw;
         size_t pixh;
         size_t pix_size;
