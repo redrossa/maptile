@@ -185,17 +185,17 @@ void map::merge_tile_data_to_buf(byte_t* dst, size_t size)
 
 map::iterator map::begin() const
 {
-    return iterator(tile_count);
+    return iterator();
 }
 
 map::iterator map::end() const
 {
-    return iterator(tile_count, tile_count);
+    return iterator(tile_count);
 }
 
 map::iterator& map::iterator::operator++()
 {
-    if (itn < max) itn++;
+    itn++;
     return *this;
 }
 

@@ -65,10 +65,9 @@ namespace maptile
 
         class iterator
         {
-            index_t max;
             index_t itn;
         public:
-            iterator(index_t _max, index_t i = 0) : max(_max), itn(i) {};
+            iterator(index_t i = 0) : itn(i) {};
             iterator& operator++();
             iterator operator++(int);
             bool operator==(iterator other) const;
