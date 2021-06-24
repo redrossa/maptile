@@ -32,7 +32,6 @@ namespace maptile
 
     class tile : degen_tile
     {
-    private:
         size_t pixw;
         size_t pixh;
         size_t pix_size;
