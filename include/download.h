@@ -9,7 +9,6 @@
 
 #include <curl/curl.h>
 
-#include <concepts>
 #include <functional>
 #include <vector>
 
@@ -26,7 +25,7 @@ namespace maptile
 
         virtual ~transfer() = default;
 
-        void append_data(byte_t* chunk, size_t chunk_size);
+        void append_data(void* chunk, size_t chunk_size);
 
         index_t get_id() const;
 
@@ -62,10 +61,11 @@ namespace maptile
 
         class builder
         {
+        protected:
             map m;
 
         public:
-            builder(const map& m) : m(m) {};
+            explicit builder(const map& m) : m(m) {};
 
             iterator begin() const;
 
@@ -88,7 +88,7 @@ namespace maptile
         size_t max_transfers;
         std::vector<transfer*> transfers;
 
-        static size_t write_cb(char* data, size_t size, size_t nmemb, void* userp);
+        static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp);
 
     public:
         template<typename T>
@@ -98,6 +98,10 @@ namespace maptile
         ~downloader();
 
         int download(const transfer::yieldfn& yield);
+
+        static void verbose(transfer* t);
+
+        static void fwrite(transfer* t);
     };
 }
 

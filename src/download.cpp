@@ -2,20 +2,15 @@
 // Created by @redrossa on 2021-06-20.
 //
 
+#include <iostream>
 #include "../include/download.h"
-
-#include "../include/indicators.hpp"
-
-#include <vector>
-#include <cstdarg>
-
-#define MAX_PARALLEL 128
 
 using namespace maptile;
 
-void transfer::append_data(byte_t* chunk, size_t chunk_size)
+void transfer::append_data(void* chunk, size_t chunk_size)
 {
-    std::copy(chunk, chunk + chunk_size, data);
+    auto* bytes = static_cast<byte_t*>(chunk);
+    data.insert(data.end(), bytes, bytes + chunk_size);
 }
 
 index_t transfer::get_id() const
@@ -76,7 +71,7 @@ transfer::iterator transfer::builder::end() const
     return iterator(m.get_tile_count());
 }
 
-size_t downloader::write_cb(byte_t* data, size_t size, size_t nmemb, void* userp)
+size_t downloader::write_cb(void* data, size_t size, size_t nmemb, void* userp)
 {
     size_t realsize = size * nmemb;
     auto* t = static_cast<transfer*>(userp);
@@ -121,7 +116,6 @@ downloader::downloader(const T& builder, size_t maxconn)
                 curl_easy_setopt(h, CURLOPT_PIPEWAIT, 1L); /* wait for pipe connection to confirm */
 #endif
                 handlers.push_back(h);
-                curl_multi_add_handle(cm, h);
             }
         }
         catch (std::bad_alloc& e)
@@ -148,8 +142,11 @@ int downloader::download(const transfer::yieldfn& yield)
     CURLMsg* msg;
     int msgs_left;
     int still_alive;
-
     index_t curr_tcount = max_parallel;
+
+    for (auto& h : handlers)
+        curl_multi_add_handle(cm, h);
+
     do
     {
         curl_multi_perform(cm, &still_alive);
@@ -169,7 +166,7 @@ int downloader::download(const transfer::yieldfn& yield)
             if (code != CURLE_OK)
             {
                 priv->clear();
-                curl_multi_add_handle(cm, h); /* Readd handle */
+                curl_multi_add_handle(cm, h); /* Read handle */
                 continue;
             }
 
@@ -188,7 +185,7 @@ int downloader::download(const transfer::yieldfn& yield)
             if (curr_tcount < max_transfers)
             {
                 /* Reuse easy handler for the next transfer */
-                transfer* t = transfers[curr_tcount];
+                transfer* t = transfers[curr_tcount++];
                 curl_easy_setopt(h, CURLOPT_URL, t->get_uri().c_str());
                 curl_easy_setopt(h, CURLOPT_WRITEDATA, t);
                 curl_easy_setopt(h, CURLOPT_PRIVATE, t);
