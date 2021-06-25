@@ -9,251 +9,198 @@
 #include <vector>
 #include <cstdarg>
 
-#define DOWNLOAD_MAX_PARALLEL 128
+#define MAX_PARALLEL 128
 
 using namespace maptile;
 
-transfer::transfer(index_t i)
+void transfer::append_data(byte_t* chunk, size_t chunk_size)
 {
-    this->i = i;
-    data = nullptr;
-    size = 0;
+    std::copy(chunk, chunk + chunk_size, data);
 }
 
-transfer::~transfer()
+index_t transfer::get_id() const
 {
-    free(data);
-    data = nullptr;
-    size = 0;
+    return id;
 }
 
-void transfer::append_data(void* chunk, size_t chunk_size)
+std::vector<byte_t>& transfer::get_data()
 {
-    auto* ptr = static_cast<byte_t*>(realloc(data, size + chunk_size));
-    if (!ptr)
-        throw std::bad_alloc();
-    data = ptr;
-    memcpy(&(data[size]), chunk, chunk_size);
-    size += chunk_size;
+    return data;
 }
 
-void transfer::get_data(byte_t* dst)
+void transfer::clear()
 {
-    memcpy(dst, data, size);
+    data.clear();
 }
 
-int maptile::verbose_flush(index_t itc, map* m, tile_transfer_t* tile_transf, va_list args)
+std::string transfer::get_uri()
 {
-    using namespace indicators;
-
-    static ProgressBar bar{
-        option::BarWidth{50},
-        option::Start{"\r["},
-        option::Fill{"="},
-        option::Lead{">"},
-        option::Remainder{"."},
-        option::End{"]"},
-        option::ShowPercentage{true},
-        option::MaxPostfixTextLen{256},
-        option::ShowElapsedTime{true},
-        option::ShowRemainingTime{true},
-    };
-
-    static tile_handle_fnp handlefn = va_arg(args, tile_handle_fnp);
-
-    if (itc == 1)
-        show_console_cursor(false);
-
-    int ret = (*handlefn)(itc, m, tile_transf, args);
-
-    if (ret)
-    {
-        bar.set_option(option::PostfixText{"Downloaded " + std::to_string(itc) + "/" + std::to_string(m->get_tile_count()) + " tiles"});
-        bar.set_progress(((double) itc/m->get_tile_count() * 100));
-    }
-
-    if (itc == m->get_tile_count())
-        show_console_cursor(true);
-
-    return ret;
+    return uri;
 }
 
-static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp) {
+transfer::iterator& transfer::iterator::operator++()
+{
+    i++;
+    return *this;
+}
+
+transfer::iterator transfer::iterator::operator++(int)
+{
+    iterator retval = *this;
+    ++(*this);
+    return retval;
+}
+
+bool transfer::iterator::operator==(transfer::iterator other) const
+{
+    return i == other.i;
+}
+
+bool transfer::iterator::operator!=(transfer::iterator other) const
+{
+    return !(*this == other);
+}
+
+index_t transfer::iterator::operator*() const
+{
+    return i;
+}
+
+transfer::iterator transfer::builder::begin() const
+{
+    return iterator();
+}
+
+transfer::iterator transfer::builder::end() const
+{
+    return iterator(m.get_tile_count());
+}
+
+size_t downloader::write_cb(byte_t* data, size_t size, size_t nmemb, void* userp)
+{
     size_t realsize = size * nmemb;
-    auto* mem = (tile_transfer_t*) userp;
-
-    auto* ptr = static_cast<byte_t*>(realloc(mem->data, mem->size + realsize + 1));
-    if (!ptr)
-        return 0;  /* out of memory! */
-
-    mem->data = ptr;
-    memcpy(&(mem->data[mem->size]), data, realsize);
-    mem->size += realsize;
-    mem->data[mem->size] = 0;
-
+    auto* t = static_cast<transfer*>(userp);
+    t->append_data(data, realsize);
     return realsize;
 }
 
-static int setup_transfer(CURL* eh, const std::function<transfer*(maptile::index_t)>& transf_builder, index_t id)
-{
-    if (!eh)
-        return 0;
-
-    index_t x, y;
-    m->tile_coords_from_index(&x, &y, transfers);
-
-    char* url = (*url_initfnp)(m, x, y);
-    if (!url)
-        return 0;
-
-    auto* priv = static_cast<tile_transfer_t*>(malloc(sizeof(tile_transfer_t)));
-    if (!priv) {
-        free(url);
-        return 0;
-    }
-    priv->z = m->get_zoom();
-    priv->x = x;
-    priv->y = y;
-    priv->data = nullptr;
-    priv->size = 0;
-
-    curl_easy_setopt(eh, CURLOPT_URL, url);
-    curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, write_cb);
-    curl_easy_setopt(eh, CURLOPT_WRITEDATA, priv);
-    curl_easy_setopt(eh, CURLOPT_PRIVATE, priv);
-    curl_easy_setopt(eh, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
-#if (CURLPIPE_MULTIPLEX > 0)
-    curl_easy_setopt(eh, CURLOPT_PIPEWAIT, 1L); /* wait for pipe connection to confirm */
-#endif
-
-    free(url);
-    return 1;
-}
-
-static void cleanup_tranfer(CURL* eh)
-{
-
-}
-
 template<typename T>
-int maptile::download(const transfer_builder& build,
-                      const transfer_handler& handler,
-                      size_t nparallel)
+requires std::is_base_of<transfer::builder, T>::value
+downloader::downloader(const T& builder, size_t maxconn)
 {
-    CURLM* cm;
-    CURLMsg* msg;
-    int msgs_left = 0;
-    int still_alive = 0;
-    index_t transfers;
-    nparallel = nparallel > ;
+    const transfer::iterator end_transfer_it = builder.end();
+    max_transfers = *end_transfer_it;
+    transfers.reserve(max_transfers);
+
+    max_parallel = max_transfers < maxconn ? max_transfers : maxconn;
+    handlers.reserve(max_parallel);
 
     cm = curl_multi_init();
-    if (!cm)
-        throw std::bad_alloc();
-
-    /* Limit the amount of simultaneous connections curl should allow: */
-    curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, nparallel);
-
+    if (!cm) throw std::bad_alloc();
+    curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, max_parallel);
     curl_multi_setopt(cm, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 
-    /* Initialize easy handler container */
-    std::vector<CURL*> ehs;
-    ehs.reserve(nparallel);
-
-    /* Will only use nparallel number of easy transfers since curl_easy_init() is costly */
-    for (transfers = 0; transfers < nparallel; transfers++)
+    for (transfer::iterator i = builder.begin(); i != end_transfer_it; i++)
     {
-        CURL* eh = curl_easy_init();
-        int ok = setup_transfer(eh, build, transfers);
-        if (!ok)
+        transfer* t;
+        try
         {
-            for (auto& eh : ehs)
-                cleanup_tranfer(eh);
-            if (eh)
-                curl_easy_cleanup(eh);
-            curl_multi_cleanup(cm);
-            throw std::bad_alloc();
+            t = builder(*i);
+            transfers.push_back(t);
+
+            if (*i < max_parallel)
+            {
+                CURL* h = curl_easy_init();
+                if (!h) throw std::bad_alloc();
+                curl_easy_setopt(h, CURLOPT_URL, t->get_uri().c_str());
+                curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_cb);
+                curl_easy_setopt(h, CURLOPT_WRITEDATA, t);
+                curl_easy_setopt(h, CURLOPT_PRIVATE, t);
+                curl_easy_setopt(h, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+#if (CURLPIPE_MULTIPLEX > 0)
+                curl_easy_setopt(h, CURLOPT_PIPEWAIT, 1L); /* wait for pipe connection to confirm */
+#endif
+                handlers.push_back(h);
+                curl_multi_add_handle(cm, h);
+            }
         }
-        ehs.push_back(eh);
-        curl_multi_add_handle(cm, eh);
+        catch (std::bad_alloc& e)
+        {
+            downloader::~downloader();
+            throw e;
+        }
     }
+}
 
+downloader::~downloader()
+{
+    for (auto& t : transfers)
+        delete t;
+    for (auto& h : handlers)
+        curl_easy_cleanup(h);
+    curl_multi_cleanup(cm);
+}
+
+int downloader::download(const transfer::yieldfn& yield)
+{
     int successes = 0;
-    index_t itc = 0;
 
-    do {
+    CURLMsg* msg;
+    int msgs_left;
+    int still_alive;
+
+    index_t curr_tcount = max_parallel;
+    do
+    {
         curl_multi_perform(cm, &still_alive);
 
-        while ((msg = curl_multi_info_read(cm, &msgs_left))) {
+        while ((msg = curl_multi_info_read(cm, &msgs_left)))
+        {
             if (msg->msg != CURLMSG_DONE)
                 continue;
 
             CURLcode code = msg->data.result;
-            CURL* eh = msg->easy_handle;
-            curl_multi_remove_handle(cm, eh);
+            CURL* h = msg->easy_handle;
             maptile::transfer* priv;
-            curl_easy_getinfo(eh, CURLINFO_PRIVATE, &priv);
-            itc++;
+            curl_multi_remove_handle(cm, h);
+            curl_easy_getinfo(h, CURLINFO_PRIVATE, &priv);
 
-            if (code == CURLE_OK) {
-                if (handler(itc, priv))
-                    successes++;
-
-                /* Reuse easy handler for the next tile */
-                if (transfers < m->get_tile_count()) {
-                    index_t x, y;
-                    m->tile_coords_from_index(&x, &y, transfers++);
-
-                    char* url = (*url_initfn)(m, x, y);
-                    if (!url) {
-                        free(priv->data);
-                        free(priv);
-                        curl_easy_cleanup(eh);
-                        transfers = m->get_tile_count(); /* Abort next tile transfers */
-                        continue;
-                    }
-
-                    priv->x = x;
-                    priv->y = y;
-                    free(priv->data);
-                    priv->data = nullptr;
-                    priv->size = 0;
-
-                    curl_easy_setopt(eh, CURLOPT_URL, url);
-                    curl_multi_add_handle(cm, eh); /* Re-add this easy handler to the multi handler */
-                    free(url);
-                } else /* Already connected for all tiles */
-                {
-                    free(priv->data);
-                    free(priv);
-                    curl_easy_cleanup(eh);
-                }
-            } else /* Try the same url again */
+            /* Error transfer so try again */
+            if (code != CURLE_OK)
             {
-                free(priv->data);
-                priv->data = nullptr;
-                priv->size = 0;
-                curl_multi_add_handle(cm, eh);
+                priv->clear();
+                curl_multi_add_handle(cm, h); /* Readd handle */
+                continue;
             }
+
+            /* What to do with the completed transfer */
+            try
+            {
+                yield(priv);
+                successes++;
+            }
+            catch (std::exception& e)
+            {
+                /* ignored */
+            }
+
+            /* All transfers not yet done */;
+            if (curr_tcount < max_transfers)
+            {
+                /* Reuse easy handler for the next transfer */
+                transfer* t = transfers[curr_tcount];
+                curl_easy_setopt(h, CURLOPT_URL, t->get_uri().c_str());
+                curl_easy_setopt(h, CURLOPT_WRITEDATA, t);
+                curl_easy_setopt(h, CURLOPT_PRIVATE, t);
+                curl_multi_add_handle(cm, h);
+            }
+
+            priv->clear();
         }
-        if (still_alive)
-            curl_multi_wait(cm, NULL, 0, 100, NULL);
 
-    } while (still_alive);
-}
-
-int maptile::download_tiles(map* m, tile_url_init_fnp url_initfn, tile_handle_fnp handlefn, ...) {
-
-
-
-
-
-
-
-
-
-    va_end(args);
-    curl_multi_cleanup(cm);
+        if (still_alive) curl_multi_wait(cm, nullptr, 0, 100, nullptr);
+    }
+    while (still_alive);
 
     return successes;
 }

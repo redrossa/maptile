@@ -2,61 +2,103 @@
 // Created by @redrossa on 2021-06-20.
 //
 
+#ifndef MAPTILE_DOWNLOAD_H
+#define MAPTILE_DOWNLOAD_H
+
 #include "map.h"
 
 #include <curl/curl.h>
 
-#ifndef MAPTILE_DOWNLOAD_H
-#define MAPTILE_DOWNLOAD_H
-
 #include <concepts>
 #include <functional>
+#include <vector>
 
 namespace maptile
 {
     class transfer
     {
-        index_t i;
-        byte_t* data;
-        size_t size;
+        index_t id;
+        std::string uri;
+        std::vector<byte_t> data;
 
     public:
-        transfer(index_t i);
+        transfer(index_t id) : id(id) {};
 
-        ~transfer();
+        virtual ~transfer() = default;
 
-        void append_data(void* chunk, size_t chunk_size);
+        void append_data(byte_t* chunk, size_t chunk_size);
 
-        void get_data(byte_t* dst);
+        index_t get_id() const;
 
-        virtual void get_url(char* dst) = 0;
+        std::vector<byte_t>& get_data();
+
+        void clear();
+
+        std::string get_uri();
+
+        class iterator
+        {
+            index_t i;
+
+        public:
+            iterator(index_t i = 0) : i(i) {};
+
+            iterator& operator++();
+
+            iterator operator++(int);
+
+            bool operator==(iterator other) const;
+
+            bool operator!=(iterator other) const;
+
+            index_t operator*() const;
+
+            using difference_type = index_t;
+            using value_type = index_t;
+            using pointer = const index_t*;
+            using reference = const index_t&;
+            using iterator_category = std::input_iterator_tag;
+        };
+
+        class builder
+        {
+            map m;
+
+        public:
+            builder(const map& m) : m(m) {};
+
+            iterator begin() const;
+
+            iterator end() const;
+
+            virtual transfer* operator()(iterator i) = 0;
+        };
+
+        typedef std::function<transfer*(index_t)> buildfn;
+
+        typedef std::function<void(transfer*)> yieldfn;
     };
 
-    typedef std::function<transfer*(maptile::index_t)> transfer_builder;
-
-    typedef std::function<int(index_t, transfer*)> transfer_handler;
-
-    template<typename T>
-    int download(const transfer_builder& build,
-                 const transfer_handler& handler,
-                 size_t nparallel = 128);
-
-    typedef struct
+    class downloader
     {
-        index_t z;
-        index_t x;
-        index_t y;
-        byte_t* data;
-        size_t size;
-    } tile_transfer_t;
+        CURLM* cm;
+        size_t max_parallel;
+        std::vector<CURL*> handlers;
 
-    typedef char* (* tile_url_init_fnp)(map* m, index_t x, index_t y);
+        size_t max_transfers;
+        std::vector<transfer*> transfers;
 
-    typedef int (* tile_handle_fnp)(index_t itc, map* m, tile_transfer_t* tile_transf, va_list args);
+        static size_t write_cb(byte_t* data, size_t size, size_t nmemb, void* userp);
 
-    int verbose_flush(index_t itc, map* m, tile_transfer_t* tile_transf, va_list args);
+    public:
+        template<typename T>
+        requires std::is_base_of<transfer::builder, T>::value
+        downloader(const T& builder, size_t maxconn = 128);
 
-    int download_tiles(map* m, tile_url_init_fnp url_initfn, tile_handle_fnp handlefn, ...);
+        ~downloader();
+
+        int download(const transfer::yieldfn& yield);
+    };
 }
 
 #endif //MAPTILE_DOWNLOAD_H
