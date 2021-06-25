@@ -11,6 +11,7 @@
 
 #include <functional>
 #include <vector>
+#include <string>
 
 namespace maptile
 {
@@ -91,9 +92,7 @@ namespace maptile
         static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp);
 
     public:
-        template<typename T>
-        requires std::is_base_of<transfer::builder, T>::value
-        downloader(const T& builder, size_t maxconn = 128);
+        downloader(transfer::builder& builder, size_t maxconn = 128);
 
         ~downloader();
 

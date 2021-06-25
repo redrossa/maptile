@@ -79,9 +79,7 @@ size_t downloader::write_cb(void* data, size_t size, size_t nmemb, void* userp)
     return realsize;
 }
 
-template<typename T>
-requires std::is_base_of<transfer::builder, T>::value
-downloader::downloader(const T& builder, size_t maxconn)
+downloader::downloader(transfer::builder& builder, size_t maxconn)
 {
     const transfer::iterator end_transfer_it = builder.end();
     max_transfers = *end_transfer_it;
