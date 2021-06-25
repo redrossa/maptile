@@ -5,8 +5,10 @@
 #ifndef MAPTILE_MAPTILE_H
 #define MAPTILE_MAPTILE_H
 
+#include <stdio.h>
+
 namespace maptile {
-    typedef unsigned int index_t;
+    typedef size_t index_t;
     typedef unsigned char byte_t;
 
     enum errc {
