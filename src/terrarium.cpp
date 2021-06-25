@@ -9,7 +9,7 @@
 using namespace terrarium;
 using namespace maptile;
 
-#define TERRARIUM_ENDPOINT "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"
+#define TERRARIUM_ENDPOINT "https://s3.amazonaws.com/elevation-tiles-prod/terrarium"
 
 transfer* builder::operator()(transfer::iterator i)
 {

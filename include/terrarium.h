@@ -5,7 +5,7 @@
 #ifndef MAPTILE_TERRARIUM_H
 #define MAPTILE_TERRARIUM_H
 
-#include "download.h"
+#include "transfer.h"
 
 namespace terrarium {
     using namespace maptile;

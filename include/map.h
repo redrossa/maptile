@@ -7,8 +7,6 @@
 
 #include "maptile.h"
 
-#include <iterator>
-
 namespace maptile
 {
     struct tile

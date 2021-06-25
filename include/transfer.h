@@ -1,17 +1,15 @@
 //
-// Created by @redrossa on 2021-06-20.
+// Created by @redrossa on 2021-06-25.
 //
 
-#ifndef MAPTILE_DOWNLOAD_H
-#define MAPTILE_DOWNLOAD_H
+#ifndef MAPTILE_TRANSFER_H
+#define MAPTILE_TRANSFER_H
 
 #include "map.h"
 
-#include <curl/curl.h>
-
-#include <functional>
-#include <vector>
 #include <string>
+#include <vector>
+#include <functional>
 
 namespace maptile
 {
@@ -63,7 +61,7 @@ namespace maptile
         class builder
         {
         protected:
-            map m;
+            const map& m;
 
         public:
             explicit builder(const map& m) : m(m) {};
@@ -79,29 +77,6 @@ namespace maptile
 
         typedef std::function<void(transfer*)> yieldfn;
     };
-
-    class downloader
-    {
-        CURLM* cm;
-        size_t max_parallel;
-        std::vector<CURL*> handlers;
-
-        size_t max_transfers;
-        std::vector<transfer*> transfers;
-
-        static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp);
-
-    public:
-        downloader(transfer::builder& builder, size_t maxconn = 128);
-
-        ~downloader();
-
-        int download(const transfer::yieldfn& yield);
-
-        static void verbose(transfer* t);
-
-        static void fwrite(transfer* t);
-    };
 }
 
-#endif //MAPTILE_DOWNLOAD_H
+#endif //MAPTILE_TRANSFER_H
