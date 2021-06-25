@@ -4,7 +4,6 @@
 
 #include "../include/map.h"
 
-#include <string>
 #include <cmath>
 #include <stdexcept>
 
