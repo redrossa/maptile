@@ -22,7 +22,7 @@ namespace maptile
         std::vector<byte_t> data;
 
     public:
-        transfer(index_t id) : id(id) {};
+        transfer(index_t id, std::string uri) : id(id), uri(uri) {};
 
         virtual ~transfer() = default;
 
@@ -88,7 +88,7 @@ namespace maptile
         size_t max_transfers;
         std::vector<transfer*> transfers;
 
-        static size_t write_cb(byte_t* data, size_t size, size_t nmemb, void* userp);
+        static size_t write_cb(char* data, size_t size, size_t nmemb, void* userp);
 
     public:
         template<typename T>
