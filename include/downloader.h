@@ -31,17 +31,6 @@ namespace maptile
         ~downloader();
 
         int download(const transfer::yieldfn& yield);
-
-        class fwriter
-        {
-            std::string dirname;
-            std::string ext;
-
-        public:
-            fwriter(std::string dirname, std::string ext);
-
-            void operator()(transfer* t) const;
-        };
     };
 }
 
