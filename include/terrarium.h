@@ -7,7 +7,8 @@
 
 #include "transfer.h"
 
-namespace terrarium {
+namespace terrarium
+{
     using namespace maptile;
 
     class builder : public transfer::builder
@@ -17,6 +18,8 @@ namespace terrarium {
     public:
         transfer* operator()(transfer::iterator i) override;
     };
+
+    std::vector<byte_t> decode(const std::vector<byte_t>& png);
 }
 
 #endif //MAPTILE_TERRARIUM_H

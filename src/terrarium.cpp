@@ -3,8 +3,10 @@
 //
 
 #include "../include/terrarium.h"
+#include "../include/lodepng.h"
 
 #include <sstream>
+#include <vector>
 
 using namespace terrarium;
 using namespace maptile;
@@ -18,4 +20,13 @@ transfer* builder::operator()(transfer::iterator i)
     std::ostringstream oss;
     oss << TERRARIUM_ENDPOINT << "/" << t.zoom << "/" << t.x << "/" << t.y << ".png";
     return new transfer(id, oss.str());
+}
+
+std::vector<byte_t> terrarium::decode(const std::vector<byte_t>& png)
+{
+    std::vector<byte_t> image; //the raw pixels
+    unsigned width, height;
+    unsigned int error = lodepng::decode(image, width, height, png);
+    if (error) throw std::exception();
+    return image;
 }
