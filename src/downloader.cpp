@@ -14,7 +14,7 @@ size_t downloader::write_cb(void* data, size_t size, size_t nmemb, void* userp)
     return realsize;
 }
 
-downloader::downloader(transfer::builder& builder, size_t maxconn)
+downloader::downloader(const transfer::builder& builder, size_t maxconn)
 {
     const transfer::iterator end_transfer_it = builder.end();
     max_transfers = *end_transfer_it;
@@ -33,7 +33,7 @@ downloader::downloader(transfer::builder& builder, size_t maxconn)
         transfer* t;
         try
         {
-            t = builder(*i);
+            t = builder.build_transfer(*i);
             transfers.push_back(t);
 
             if (*i < max_parallel)

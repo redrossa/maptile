@@ -58,19 +58,13 @@ namespace maptile
             using iterator_category = std::input_iterator_tag;
         };
 
-        class builder
+        struct builder
         {
-        protected:
-            const map& m;
+            virtual iterator begin() const = 0;
 
-        public:
-            explicit builder(const map& m) : m(m) {};
+            virtual iterator end() const = 0;
 
-            iterator begin() const;
-
-            iterator end() const;
-
-            virtual transfer* operator()(iterator i) = 0;
+            virtual transfer* build_transfer(iterator i) const = 0;
         };
 
         typedef std::function<transfer*(index_t)> buildfn;

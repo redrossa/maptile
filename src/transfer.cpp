@@ -59,13 +59,3 @@ index_t transfer::iterator::operator*() const
 {
     return i;
 }
-
-transfer::iterator transfer::builder::begin() const
-{
-    return iterator();
-}
-
-transfer::iterator transfer::builder::end() const
-{
-    return iterator(m.get_tile_count());
-}

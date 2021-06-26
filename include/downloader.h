@@ -9,6 +9,9 @@
 
 #include <curl/curl.h>
 
+#include <sstream>
+#include <fstream>
+
 namespace maptile
 {
     class downloader
@@ -23,7 +26,7 @@ namespace maptile
         static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp);
 
     public:
-        downloader(transfer::builder& builder, size_t maxconn = 128);
+        downloader(const transfer::builder& builder, size_t maxconn = 128);
 
         ~downloader();
 
@@ -31,12 +34,11 @@ namespace maptile
 
         class fwriter
         {
-            const map& m;
             std::string dirname;
             std::string ext;
 
         public:
-            fwriter(const map& m, std::string dirname, std::string ext) : m(m), dirname(dirname), ext(ext) {};
+            fwriter(std::string dirname, std::string ext);
 
             void operator()(transfer* t) const;
         };
