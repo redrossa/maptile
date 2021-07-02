@@ -14,13 +14,10 @@ size_t downloader::write_cb(void* data, size_t size, size_t nmemb, void* userp)
     return realsize;
 }
 
-downloader::downloader(const transfer::builder& builder, size_t maxconn)
+downloader::downloader(const std::vector<transfer*>& transfers, size_t maxconn) : transfers(transfers)
 {
-    const transfer::iterator end_transfer_it = builder.end();
-    max_transfers = *end_transfer_it;
-    transfers.reserve(max_transfers);
-
-    max_parallel = max_transfers < maxconn ? max_transfers : maxconn;
+    size_t transfers_size = transfers.size();
+    size_t max_parallel = transfers_size < maxconn ? transfers_size : maxconn;
     handlers.reserve(max_parallel);
 
     cm = curl_multi_init();
@@ -28,41 +25,29 @@ downloader::downloader(const transfer::builder& builder, size_t maxconn)
     curl_multi_setopt(cm, CURLMOPT_MAXCONNECTS, max_parallel);
     curl_multi_setopt(cm, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 
-    for (transfer::iterator i = builder.begin(); i != end_transfer_it; i++)
+    for (index_t i = 0; i < max_parallel; i++)
     {
-        transfer* t;
-        try
+        transfer* t = transfers[i];
+        CURL* h = curl_easy_init();
+        if (!h)
         {
-            t = builder.build_transfer(*i);
-            transfers.push_back(t);
-
-            if (*i < max_parallel)
-            {
-                CURL* h = curl_easy_init();
-                if (!h) throw std::bad_alloc();
-                curl_easy_setopt(h, CURLOPT_URL, t->get_uri().c_str());
-                curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_cb);
-                curl_easy_setopt(h, CURLOPT_WRITEDATA, t);
-                curl_easy_setopt(h, CURLOPT_PRIVATE, t);
-                curl_easy_setopt(h, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+            this->~downloader();
+            throw std::bad_alloc();
+        }
+        curl_easy_setopt(h, CURLOPT_URL, t->get_uri().c_str());
+        curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_cb);
+        curl_easy_setopt(h, CURLOPT_WRITEDATA, t);
+        curl_easy_setopt(h, CURLOPT_PRIVATE, t);
+        curl_easy_setopt(h, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 #if (CURLPIPE_MULTIPLEX > 0)
-                curl_easy_setopt(h, CURLOPT_PIPEWAIT, 1L); /* wait for pipe connection to confirm */
+        curl_easy_setopt(h, CURLOPT_PIPEWAIT, 1L); /* wait for pipe connection to confirm */
 #endif
-                handlers.push_back(h);
-            }
-        }
-        catch (std::bad_alloc& e)
-        {
-            downloader::~downloader();
-            throw e;
-        }
+        handlers.push_back(h);
     }
 }
 
 downloader::~downloader()
 {
-    for (auto& t : transfers)
-        delete t;
     for (auto& h : handlers)
         curl_easy_cleanup(h);
     curl_multi_cleanup(cm);
@@ -75,7 +60,7 @@ int downloader::download(const transfer::yieldfn& yield)
     CURLMsg* msg;
     int msgs_left;
     int still_alive;
-    index_t curr_tcount = max_parallel;
+    index_t curr_tcount = handlers.size();
 
     for (auto& h : handlers)
         curl_multi_add_handle(cm, h);
@@ -115,7 +100,7 @@ int downloader::download(const transfer::yieldfn& yield)
             }
 
             /* All transfers not yet done */;
-            if (curr_tcount < max_transfers)
+            if (curr_tcount < transfers.size())
             {
                 /* Reuse easy handler for the next transfer */
                 transfer* t = transfers[curr_tcount++];
@@ -128,7 +113,8 @@ int downloader::download(const transfer::yieldfn& yield)
             priv->clear();
         }
 
-        if (still_alive) curl_multi_wait(cm, nullptr, 0, 100, nullptr);
+        if (still_alive)
+            curl_multi_wait(cm, nullptr, 0, 100, nullptr);
     }
     while (still_alive);
 
