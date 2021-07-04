@@ -7,6 +7,8 @@
 
 #include "maptile.h"
 
+#include <vector>
+
 namespace maptile
 {
     struct tile
@@ -51,6 +53,8 @@ namespace maptile
         index_t tile_to_index(index_t x, index_t y) const;
 
         index_t tile_to_index(tile t) const;
+
+        std::vector<byte_t> to_bytes() const;
     };
 }
 

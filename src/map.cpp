@@ -11,6 +11,8 @@
 #   define M_PI 3.1415926535
 #endif
 
+#define MAPTILE_MAX_SERIAL_MAP_SIZE 17
+
 using namespace maptile;
 
 static int x_mercator(int zoom, double lon)
@@ -110,4 +112,30 @@ index_t map::tile_to_index(index_t x, index_t y) const
 index_t map::tile_to_index(tile t) const
 {
     return tile_to_index(t.x, t.y);
+}
+
+static void chop_bytes(std::vector<byte_t>& dst, unsigned long u, size_t size = 0)
+{
+    if (!size)
+        u = sizeof(u);
+    std::vector<byte_t> v;
+    while (size > 0)
+    {
+        byte_t b = u & 0xFF;
+        v.insert(v.begin(), b);
+        u >>= 8;
+        size--;
+    }
+    dst.insert(dst.end(), v.begin(), v.end());
+}
+
+std::vector<byte_t> map::to_bytes() const
+{
+    std::vector<byte_t> b;
+    chop_bytes(b, zoom, 1);
+    chop_bytes(b, xmin, 4);
+    chop_bytes(b, ymin, 4);
+    chop_bytes(b, xshape, 4);
+    chop_bytes(b, yshape, 4);
+    return b;
 }
