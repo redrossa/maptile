@@ -20,6 +20,7 @@ namespace maptile
 
     class map
     {
+    protected:
         index_t zoom;
         index_t xmin;
         index_t xmax;
