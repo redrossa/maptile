@@ -31,6 +31,16 @@ namespace maptile
         size_t tile_count;
 
     public:
+        map(index_t zoom, index_t xmin, index_t ymin, index_t xshape, index_t yshape) :
+                zoom(zoom),
+                xmin(xmin),
+                xmax(xmin + xshape - 1),
+                ymin(ymin),
+                ymax(ymin + yshape - 1),
+                xshape(xshape),
+                yshape(yshape),
+                tile_count(xshape * yshape) {};
+
         map(index_t zoom, double lat1, double lon1, double lat2, double lon2);
 
         index_t get_zoom() const;
