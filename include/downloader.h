@@ -32,34 +32,33 @@ namespace maptile
         }
     };
 
-    template<class T>
-    struct transfer
-    {
-        T header;
-        std::vector<byte_t> data;
-
-        explicit transfer(T& h) : header(h) {};
-
-        void update_header(T& h)
-        {
-            header = h;
-        }
-
-        void append_data(void* chunk, size_t chunk_size)
-        {
-            auto* bytes = static_cast<byte_t*>(chunk);
-            data.insert(data.end(), bytes, bytes + chunk_size);
-        }
-
-        void clear()
-        {
-            data.clear();
-        }
-    };
-
-    template<class T>
+    template<class T, std::enable_if_t<std::is_base_of<header, T>::value, bool> = true>
     class downloader
     {
+        struct transfer
+        {
+            T header;
+            std::vector<byte_t> data;
+
+            explicit transfer(T& h) : header(h) {};
+
+            void update_header(T& h)
+            {
+                header = h;
+            }
+
+            void append_data(void* chunk, size_t chunk_size)
+            {
+                auto* bytes = static_cast<byte_t*>(chunk);
+                data.insert(data.end(), bytes, bytes + chunk_size);
+            }
+
+            void clear()
+            {
+                data.clear();
+            }
+        };
+
         CURLM* cm;
         std::vector<CURL*> handlers;
         std::vector<T> headers;
@@ -67,7 +66,7 @@ namespace maptile
         static size_t write_cb(void* data, size_t size, size_t nmemb, void* userp)
         {
             size_t realsize = size * nmemb;
-            auto* t = static_cast<transfer<T>*>(userp);
+            auto* t = static_cast<transfer*>(userp);
             t->append_data(data, realsize);
             return realsize;
         }
@@ -88,12 +87,12 @@ namespace maptile
             {
                 T h = headers[i];
                 CURL* eh;
-                transfer<T>* priv;
+                transfer* priv;
                 try
                 {
                     eh = curl_easy_init();
                     if (!eh) throw std::bad_alloc();
-                    priv = new transfer<T>(h);
+                    priv = new transfer(h);
                 }
                 catch (std::bad_alloc& e)
                 {
@@ -117,7 +116,7 @@ namespace maptile
         {
             for (auto& eh : handlers)
             {
-                transfer<T>* priv = nullptr;
+                transfer* priv = nullptr;
                 curl_easy_getinfo(eh, CURLINFO_PRIVATE, &priv);
                 delete priv;
                 curl_easy_cleanup(eh);
@@ -148,7 +147,7 @@ namespace maptile
 
                     CURLcode code = msg->data.result;
                     CURL* eh = msg->easy_handle;
-                    transfer<T>* priv;
+                    transfer* priv;
                     curl_multi_remove_handle(cm, eh);
                     curl_easy_getinfo(eh, CURLINFO_PRIVATE, &priv);
 
