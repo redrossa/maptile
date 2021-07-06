@@ -139,3 +139,41 @@ std::vector<byte_t> map::to_bytes() const
     chop_bytes(b, yshape, 4);
     return b;
 }
+
+map::tile_iterator map::begin() const
+{
+    return map::tile_iterator(*this);
+}
+
+map::tile_iterator map::end() const
+{
+    return map::tile_iterator(*this, tile_count);
+}
+
+bool map::tile_iterator::operator==(const map::tile_iterator& other) const
+{
+    return i == other.i;
+}
+
+bool map::tile_iterator::operator!=(const tile_iterator& other) const
+{
+    return !(*this == other);
+}
+
+tile map::tile_iterator::operator*() const
+{
+    return m.tile_from_index(i);
+}
+
+map::tile_iterator& map::tile_iterator::operator++()
+{
+    i++;
+    return *this;
+}
+
+map::tile_iterator map::tile_iterator::operator++(int)
+{
+    map::tile_iterator ret = *this;
+    ++(*this);
+    return ret;
+}

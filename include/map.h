@@ -56,6 +56,29 @@ namespace maptile
         index_t tile_to_index(tile t) const;
 
         std::vector<byte_t> to_bytes() const;
+
+        class tile_iterator
+        {
+            const map& m;
+            index_t i;
+
+        public:
+            tile_iterator(const map& m, index_t i = 0) : m(m), i(i) {};
+
+            bool operator==(const tile_iterator& other) const;
+
+            bool operator!=(const tile_iterator& other) const;
+
+            tile operator*() const;
+
+            tile_iterator& operator++();
+
+            tile_iterator operator++(int);
+        };
+
+        tile_iterator begin() const;
+
+        tile_iterator end() const;
     };
 }
 
